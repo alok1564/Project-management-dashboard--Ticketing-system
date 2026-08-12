@@ -27,12 +27,14 @@
   --status-reopened-bg: #FFF1E6;
   
   /* Priority colors */
-  --priority-high: #EF4444;
-  --priority-high-bg: #FEF2F2;
-  --priority-medium: #F0B429;
-  --priority-medium-bg: #FFF8E1;
-  --priority-low: #6B7280;
-  --priority-low-bg: #F3F4F6;
+  --priority-p1: #DC2626;
+  --priority-p1-bg: rgba(220, 38, 38, 0.12);
+  --priority-p2: #EA580C;
+  --priority-p2-bg: rgba(234, 88, 12, 0.12);
+  --priority-p3: #F0B429;
+  --priority-p3-bg: rgba(240, 180, 41, 0.15);
+  --priority-p4: #22A06B;
+  --priority-p4-bg: rgba(34, 160, 107, 0.12);
   
   /* Spacing */
   --space-xs: 4px;

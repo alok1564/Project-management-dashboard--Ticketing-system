@@ -27,11 +27,12 @@ function getMaxSelectableDay(monthValue) {
 
 export default function TicketFilters({ onFilterChange }) {
   const { user } = useAuth();
+  const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [assignee, setAssignee] = useState('');
   const [priority, setPriority] = useState('');
-  const [date, setDate] = useState(''); // full ISO date, e.g. "2026-08-11", derived from month + day
-  const [day, setDay] = useState('');   // just the day-of-month number, e.g. "11"
+  const [date, setDate] = useState('');
+  const [day, setDay] = useState('');
   const [month, setMonth] = useState(getCurrentMonth());
   const [employees, setEmployees] = useState([]);
 
@@ -46,10 +47,6 @@ export default function TicketFilters({ onFilterChange }) {
     }
   }, [showAssigneeFilter]);
 
-  // If the selected day is no longer valid for the current month
-  // (e.g. day 31 selected, then month changed to February, or today's
-  // date moved backward relative to a previously selected future day),
-  // clear it.
   useEffect(() => {
     if (day && Number(day) > maxSelectableDay) {
       setDay('');
@@ -60,8 +57,14 @@ export default function TicketFilters({ onFilterChange }) {
   }, [maxSelectableDay]);
 
   const emitFilters = (overrides = {}) => {
-    const next = { status, assignee, priority, date, month, ...overrides };
+    const next = { search, status, assignee, priority, date, month, ...overrides };
     onFilterChange(next);
+  };
+
+  const handleSearchChange = (e) => {
+    const val = e.target.value;
+    setSearch(val);
+    emitFilters({ search: val });
   };
 
   const handleStatusChange = (e) => {
@@ -105,6 +108,46 @@ export default function TicketFilters({ onFilterChange }) {
 
   return (
     <div className="ticket-filters">
+      <div className="filter-group filter-group-search">
+        <label className="filter-label" htmlFor="titleSearch">Search</label>
+        <input
+          id="titleSearch"
+          type="text"
+          className="filter-control"
+          placeholder="Search by title"
+          value={search}
+          onChange={handleSearchChange}
+        />
+      </div>
+
+      <div className="filter-group">
+        <label className="filter-label" htmlFor="dayFilter">Date</label>
+        <select
+          id="dayFilter"
+          className="filter-control"
+          value={day}
+          onChange={handleDayChange}
+          disabled={!month}
+        >
+          <option value="">Any date</option>
+          {Array.from({ length: maxSelectableDay }, (_, i) => i + 1).map((d) => (
+            <option key={d} value={d}>{d}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="filter-group">
+        <label className="filter-label" htmlFor="monthFilter">Month</label>
+        <input 
+          id="monthFilter" 
+          type="month" 
+          className="filter-control" 
+          value={month} 
+          max={getCurrentMonth()}
+          onChange={handleMonthChange}
+        />
+      </div>
+
       <div className="filter-group">
         <label className="filter-label" htmlFor="statusFilter">Status</label>
         <select 
@@ -130,9 +173,10 @@ export default function TicketFilters({ onFilterChange }) {
           onChange={handlePriorityChange}
         >
           <option value="">All</option>
-          <option value="High">High</option>
-          <option value="Medium">Medium</option>
-          <option value="Low">Low</option>
+          <option value="P1">P1 - Emergency (4 hours)</option>
+          <option value="P2">P2 - High (8 hours)</option>
+          <option value="P3">P3 - Medium (48 hours)</option>
+          <option value="P4">P4 - Low (5 days)</option>
         </select>
       </div>
 
@@ -153,34 +197,6 @@ export default function TicketFilters({ onFilterChange }) {
           </select>
         </div>
       )}
-
-      <div className="filter-group">
-        <label className="filter-label" htmlFor="monthFilter">Month</label>
-        <input 
-          id="monthFilter" 
-          type="month" 
-          className="filter-control" 
-          value={month} 
-          max={getCurrentMonth()}
-          onChange={handleMonthChange}
-        />
-      </div>
-
-      <div className="filter-group">
-        <label className="filter-label" htmlFor="dayFilter">Date</label>
-        <select
-          id="dayFilter"
-          className="filter-control"
-          value={day}
-          onChange={handleDayChange}
-          disabled={!month}
-        >
-          <option value="">Any date</option>
-          {Array.from({ length: maxSelectableDay }, (_, i) => i + 1).map((d) => (
-            <option key={d} value={d}>{d}</option>
-          ))}
-        </select>
-      </div>
     </div>
   );
 }

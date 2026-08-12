@@ -34,9 +34,8 @@ export default function Navbar() {
     <nav className="navbar">
       <div className="container navbar-container">
         <Link to="/" className="navbar-brand">
-          <span className="navbar-logo">🎫</span>
-          <span className="navbar-title">Multiplier</span>
-        </Link>
+  <img src="/multiplier_logo.png" alt="Multiplier" className="navbar-logo-img" />
+</Link>
         
         <button 
           className="mobile-menu-btn" 

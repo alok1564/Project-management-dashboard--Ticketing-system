@@ -7,7 +7,7 @@ export default function NewTicketPage() {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState('Medium');
+  const [priority, setPriority] = useState('P3');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -78,9 +78,10 @@ export default function NewTicketPage() {
               value={priority}
               onChange={(e) => setPriority(e.target.value)}
             >
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
+              <option value="P1">P1 - Emergency (4 hours)</option>
+              <option value="P2">P2 - High (8 hours)</option>
+              <option value="P3">P3 - Medium (48 hours)</option>
+              <option value="P4">P4 - Low (5 days)</option>
             </select>
           </div>
 

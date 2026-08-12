@@ -27,9 +27,10 @@ function formatTimestamp(dateInput) {
 export default function TicketCard({ ticket }) {
   const getPriorityColor = (priority) => {
     switch (priority?.toLowerCase()) {
-      case 'high': return { bg: 'var(--priority-high-bg)', text: 'var(--priority-high)' };
-      case 'medium': return { bg: 'var(--priority-medium-bg)', text: 'var(--priority-medium)' };
-      case 'low': return { bg: 'var(--priority-low-bg)', text: 'var(--priority-low)' };
+      case 'p1': return { bg: 'var(--priority-p1-bg)', text: 'var(--priority-p1)' };
+      case 'p2': return { bg: 'var(--priority-p2-bg)', text: 'var(--priority-p2)' };
+      case 'p3': return { bg: 'var(--priority-p3-bg)', text: 'var(--priority-p3)' };
+      case 'p4': return { bg: 'var(--priority-p4-bg)', text: 'var(--priority-p4)' };
       default: return { bg: 'var(--color-border-light)', text: 'var(--color-text-secondary)' };
     }
   };

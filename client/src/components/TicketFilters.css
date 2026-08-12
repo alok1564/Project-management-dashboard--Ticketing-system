@@ -12,7 +12,9 @@
 .ticket-filters::-webkit-scrollbar {
   display: none;
 }
-
+.filter-group-search .filter-control {
+  min-width: 160px;
+}
 .filter-group {
   flex-shrink: 0;
   display: flex;

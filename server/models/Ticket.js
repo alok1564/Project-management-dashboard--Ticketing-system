@@ -10,12 +10,13 @@ const ticketSchema = new mongoose.Schema({
   },
   priority: { 
     type: String, 
-    enum: ['Low', 'Medium', 'High'], 
-    default: 'Medium' 
+    enum: ['P1', 'P2', 'P3', 'P4'], 
+    default: 'P3' 
   },
   requester: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   assignee: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   assignedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  assignedAt: { type: Date, default: null }, // UTC timestamp of the most recent assignment — drives the 30-min auto In Progress transition
   createdAt: { type: Date, default: Date.now },
   lastActivity: { type: Date, default: Date.now }
 });

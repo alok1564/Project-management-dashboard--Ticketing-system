@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { apiFetch } from '../utils/api';
@@ -30,14 +30,12 @@ function formatDate(dateStr) {
 function formatCommentTime(dateStr) {
   if (!dateStr) return '';
   const date = new Date(dateStr);
-  const now = new Date();
-  const diffHours = (now - date) / (1000 * 60 * 60);
 
-  if (diffHours < 24) {
-    return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-  }
-
-  return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  // Always show date + time together for comment/activity timestamps.
+  return date.toLocaleString(undefined, {
+    year: 'numeric', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
 }
 
 function roleInitial(role) {
@@ -57,10 +55,12 @@ export default function TicketDetailPage() {
   const [commentText, setCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
   const [updatingAssignee, setUpdatingAssignee] = useState(false);
-  const [statusAction, setStatusAction] = useState(null); // null | 'start' | 'close'
+  const [statusAction, setStatusAction] = useState(null); // null | 'close'
   const [showReopenForm, setShowReopenForm] = useState(false);
   const [reopenText, setReopenText] = useState('');
   const [submittingReopen, setSubmittingReopen] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const bottomRef = useRef(null);
 
   useEffect(() => {
     fetchTicket();
@@ -70,6 +70,24 @@ export default function TicketDetailPage() {
       }).catch(console.error);
     }
   }, [id, user.role]);
+
+  // Show a "go to bottom" button whenever the end of the discussion thread
+  // isn't currently in view — naturally stays hidden if the thread is short
+  // enough that it's already visible without scrolling.
+  useEffect(() => {
+    const node = bottomRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowScrollButton(!entry.isIntersecting),
+      { threshold: 0 }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [comments.length, ticket]);
+
+  const scrollToBottom = () => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  };
 
   const fetchTicket = async () => {
     try {
@@ -172,8 +190,7 @@ export default function TicketDetailPage() {
   const requesterRole = (ticket.requester?.role || 'client').toLowerCase();
   const assigneeRole = (ticket.assignee?.role || 'employee').toLowerCase();
   const canReopen = user.role === 'client' && ticket.requester?._id === user.id && ticket.status === 'Closed';
-  const canClose = (isAssignedToMe || canUpdateStatusPM) && ticket.status === 'In Progress';
-  const canStartWork = isAssignedToMe && ticket.status === 'Assigned';
+  const canClose = ticket.status !== 'Closed' && (canUpdateStatusPM || isAssignedToMe);
 
   return (
     <div className="container ticket-detail-page animate-fade-in">
@@ -197,7 +214,9 @@ export default function TicketDetailPage() {
             </div>
 
             <div className="comments-section-inner">
-              <h3>Discussion ({comments.length})</h3>
+              {/* <div className="discussion-label">
+                Discussion<span className="discussion-count">{comments.length}</span>
+              </div> */}
 
               <ul className="timeline">
                 {/* Opening event — remove this block if you don't want the "opened this ticket" line */}
@@ -215,7 +234,7 @@ export default function TicketDetailPage() {
                   comments.map((comment) => {
                     const role = (comment.author?.role || '').toLowerCase();
 
-                    // System-generated activity entries (assign / start / close)
+                    // System-generated activity entries (assign / close / auto-transition)
                     // render as a lightweight event line, same pattern as "opened this ticket".
                     if (comment.isActivity) {
                       return (
@@ -224,7 +243,13 @@ export default function TicketDetailPage() {
                             {roleInitial(role)}
                           </div>
                           <div className="timeline-event-text">
-                            <span className="comment-author">{comment.author?.name || 'Unknown'}</span> {comment.text}
+                            {comment.isSystem ? (
+                              comment.text
+                            ) : (
+                              <>
+                                <span className="comment-author">{comment.author?.name || 'Unknown'}</span> {comment.text}
+                              </>
+                            )}
                             <span className="comment-time"> · {formatCommentTime(comment.createdAt)}</span>
                           </div>
                         </li>
@@ -261,21 +286,25 @@ export default function TicketDetailPage() {
                 )}
               </ul>
 
-              <form onSubmit={handleAddComment} className="comment-form">
-                <textarea
-                  className="form-control"
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  placeholder="Type your comment here..."
-                  required
-                  rows="3"
-                />
-                <div className="comment-form-actions">
-                  <button type="submit" className="btn btn-primary" disabled={submittingComment}>
-                    {submittingComment ? 'Posting...' : 'Post Comment'}
-                  </button>
-                </div>
-              </form>
+              {ticket.status !== 'Closed' && (
+                <form onSubmit={handleAddComment} className="comment-form">
+                  <textarea
+                    className="form-control"
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    placeholder="Type your comment here..."
+                    required
+                    rows="3"
+                  />
+                  <div className="comment-form-actions">
+                    <button type="submit" className="btn btn-primary" disabled={submittingComment}>
+                      {submittingComment ? 'Posting...' : 'Post Comment'}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              <div ref={bottomRef} />
             </div>
           </div>
         </div>
@@ -312,20 +341,10 @@ export default function TicketDetailPage() {
             )}
           </div>
 
-          {(canStartWork || canClose || canReopen) && (
+          {(canClose || canReopen) && (
             <div className="sidebar-section">
               <h4 className="sidebar-section-title">Status</h4>
               <div className="sidebar-controls">
-                {canStartWork && (
-                  <button
-                    className="btn btn-primary btn-sm"
-                    onClick={() => handleStatusUpdate('In Progress', 'start')}
-                    disabled={statusAction !== null}
-                  >
-                    {statusAction === 'start' ? <span className="spinner-sm" aria-label="Updating" /> : 'Start Work'}
-                  </button>
-                )}
-
                 {canClose && (
                   <button
                     className="btn btn-secondary btn-sm"
@@ -408,6 +427,17 @@ export default function TicketDetailPage() {
           </div>
         </aside>
       </div>
+
+      {showScrollButton && (
+        <button
+          type="button"
+          className="scroll-to-bottom-btn"
+          onClick={scrollToBottom}
+          aria-label="Go to bottom of discussion"
+        >
+          ↓ Bottom
+        </button>
+      )}
     </div>
   );
 }

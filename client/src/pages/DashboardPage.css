@@ -15,6 +15,7 @@
   font-weight: 700;
   color: var(--color-text);
   margin-bottom: var(--space-xs);
+  margin-top: var(--space-lg);
 }
 
 .dashboard-subtitle {

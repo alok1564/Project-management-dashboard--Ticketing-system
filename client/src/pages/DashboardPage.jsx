@@ -6,14 +6,19 @@ import TicketCard from '../components/TicketCard';
 import TicketFilters from '../components/TicketFilters';
 import './DashboardPage.css';
 
-function filterByDateRange(tickets, filters) {
+function filterTickets(tickets, filters) {
   return tickets.filter(ticket => {
-    const created = new Date(ticket.createdAt);
+    // Search by title
+    if (filters.search && !ticket.title?.toLowerCase().includes(filters.search.toLowerCase())) {
+      return false;
+    }
 
     // Priority filter
     if (filters.priority && ticket.priority !== filters.priority) {
       return false;
     }
+
+    const created = new Date(ticket.createdAt);
 
     // Specific date filter (overrides month)
     if (filters.date) {
@@ -47,9 +52,10 @@ export default function DashboardPage() {
     assignee: '',
     priority: '',
     date: '',
+    search: '',
     month: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`
   });
-  
+
   const fetchTickets = async () => {
     setLoading(true);
     try {
@@ -57,7 +63,7 @@ export default function DashboardPage() {
       const query = new URLSearchParams();
       if (filters.status) query.append('status', filters.status);
       if (filters.assignee) query.append('assignee', filters.assignee);
-      
+
       const data = await apiFetch(`/tickets?${query.toString()}`);
       setAllTickets(data);
     } catch (err) {
@@ -71,8 +77,8 @@ export default function DashboardPage() {
     fetchTickets();
   }, [filters.status, filters.assignee]);
 
-  // Apply client-side filters (priority, date, month)
-  const displayedTickets = filterByDateRange(allTickets, filters);
+  // Apply client-side filters (search, priority, date, month)
+  const displayedTickets = filterTickets(allTickets, filters);
 
   return (
     <div className="container dashboard-page animate-fade-in">
@@ -83,7 +89,7 @@ export default function DashboardPage() {
             Here's your project status.
           </p>
         </div>
-        
+
         {user.role === 'client' && (
           <Link to="/tickets/new" className="btn btn-primary">
             + New Ticket

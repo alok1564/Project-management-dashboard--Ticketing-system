@@ -8,6 +8,55 @@ const router = express.Router();
 
 router.use(authenticate);
 
+const AUTO_IN_PROGRESS_MS = 5 * 60 * 1000; // 30 minutes
+
+// If a ticket has sat in 'Assigned' status for 30+ minutes since assignedAt,
+// flip it to 'In Progress' and log the transition in the comment thread.
+// Date.now() and Date.getTime() are always UTC epoch ms in Node, so this
+// comparison is inherently timezone-safe — no explicit UTC conversion needed.
+// Called on every read (list + detail) since there's no scheduled job.
+//
+// The status flip uses an atomic, conditional findOneAndUpdate (only
+// succeeds if status is still 'Assigned' at write time) instead of a plain
+// save(). This prevents the race where two near-simultaneous requests (e.g.
+// the dashboard list and the detail page both loading around the same
+// moment) each read the ticket while it's still 'Assigned' and both try to
+// log the transition — only one of them will actually win the update, so
+// only one activity comment gets created.
+async function autoAdvanceToInProgress(ticket) {
+  if (ticket.status !== 'Assigned' || !ticket.assignedAt || !ticket.assignee) {
+    return;
+  }
+
+  const assignedAtMs = new Date(ticket.assignedAt).getTime();
+  const nowMs = Date.now();
+  if (nowMs - assignedAtMs < AUTO_IN_PROGRESS_MS) {
+    return;
+  }
+
+  const updated = await Ticket.findOneAndUpdate(
+    { _id: ticket._id, status: 'Assigned' },
+    { status: 'In Progress', lastActivity: Date.now() },
+    { new: true }
+  );
+
+  if (!updated) {
+    // Another concurrent request already advanced it — nothing more to do.
+    return;
+  }
+
+  ticket.status = updated.status;
+  ticket.lastActivity = updated.lastActivity;
+
+  await Comment.create({
+    ticket: ticket._id,
+    author: ticket.assignee._id || ticket.assignee,
+    text: 'Ticket status has been changed to In Progress',
+    isActivity: true,
+    isSystem: true
+  });
+}
+
 // GET /api/tickets — list tickets scoped by role, with optional filters
 router.get('/', async (req, res) => {
   try {
@@ -37,6 +86,10 @@ router.get('/', async (req, res) => {
       .populate('assignee', 'name email role')
       .populate('assignedBy', 'name email role');
 
+    for (const ticket of tickets) {
+      await autoAdvanceToInProgress(ticket);
+    }
+
     res.json(tickets);
   } catch (error) {
     res.status(500).json({ message: 'Server error fetching tickets' });
@@ -55,7 +108,7 @@ router.post('/', requireRole('client'), async (req, res) => {
     const newTicket = new Ticket({
       title,
       description,
-      priority: priority || 'Medium',
+      priority: priority || 'P3',
       requester: req.user._id,
       status: 'New'
     });
@@ -91,6 +144,10 @@ router.get('/:id', async (req, res) => {
       return res.status(403).json({ message: 'Access denied' });
     }
 
+    // Apply the 30-min auto-transition before loading comments, so a just-triggered
+    // activity entry shows up in the same response.
+    await autoAdvanceToInProgress(ticket);
+
     const comments = await Comment.find({ ticket: ticket._id })
       .sort({ createdAt: 1 })
       .populate('author', 'name email role');
@@ -101,12 +158,16 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// PUT /api/tickets/:id — update ticket (assign / start work / close).
-// Status can no longer be set to an arbitrary value — only the two
-// explicit, user-triggered transitions below are allowed. New/Reopened -> Assigned
-// still happens automatically as a side effect of assignment. Reopened is treated
-// exactly like New everywhere: it must go through Assigned -> In Progress -> Closed
-// again, same as any other ticket.
+// PUT /api/tickets/:id — update ticket (assign / close).
+// 'Closed' is the only explicit status transition left. 'In Progress' is no
+// longer set by any user action — it happens automatically 30 minutes after
+// assignment (see autoAdvanceToInProgress). New/Reopened -> Assigned still
+// happens automatically as a side effect of assignment. Reopened continues
+// to be treated exactly like New everywhere.
+//
+// Close permissions: PM/Admin can close a ticket from any non-Closed phase.
+// An employee can close a ticket only if it is currently assigned to them,
+// from any non-Closed phase (Assigned or In Progress).
 router.put('/:id', async (req, res) => {
   try {
     const { status, assignee } = req.body;
@@ -128,6 +189,7 @@ router.put('/:id', async (req, res) => {
 
         ticket.assignee = employee._id;
         ticket.assignedBy = req.user._id;
+        ticket.assignedAt = Date.now(); // starts the 30-minute auto In Progress timer
         if (ticket.status === 'New' || ticket.status === 'Assigned' || ticket.status === 'Reopened') {
           ticket.status = 'Assigned';
         }
@@ -140,6 +202,7 @@ router.put('/:id', async (req, res) => {
       } else {
         ticket.assignee = null;
         ticket.assignedBy = null;
+        ticket.assignedAt = null;
         activityComments.push({
           ticket: ticket._id,
           author: req.user._id,
@@ -149,30 +212,9 @@ router.put('/:id', async (req, res) => {
       }
     }
 
-    // Handle status update — only 'In Progress' (start work) and 'Closed'
-    // are valid explicit transitions; anything else is rejected.
+    // Handle status update
     if (status !== undefined) {
-      if (status === 'In Progress') {
-        const isAssignedEmployee =
-          req.user.role === 'employee' &&
-          ticket.assignee &&
-          ticket.assignee.toString() === req.user._id.toString();
-
-        if (!isAssignedEmployee) {
-          return res.status(403).json({ message: 'Only the assigned employee can start work' });
-        }
-        if (ticket.status !== 'Assigned') {
-          return res.status(400).json({ message: 'Ticket must be Assigned before work can start' });
-        }
-
-        ticket.status = 'In Progress';
-        activityComments.push({
-          ticket: ticket._id,
-          author: req.user._id,
-          text: 'started working on this ticket',
-          isActivity: true
-        });
-      } else if (status === 'Closed') {
+      if (status === 'Closed') {
         const isAssignedEmployee =
           req.user.role === 'employee' &&
           ticket.assignee &&
@@ -182,8 +224,8 @@ router.put('/:id', async (req, res) => {
         if (!isAssignedEmployee && !isPmOrAdmin) {
           return res.status(403).json({ message: 'Only the assigned employee, PM, or Admin can close this ticket' });
         }
-        if (ticket.status !== 'In Progress') {
-          return res.status(400).json({ message: 'Ticket must be In Progress before it can be closed' });
+        if (ticket.status === 'Closed') {
+          return res.status(400).json({ message: 'Ticket is already closed' });
         }
 
         ticket.status = 'Closed';
@@ -220,6 +262,9 @@ router.put('/:id', async (req, res) => {
 // If `reopen: true` is sent, the requesting client can reopen a Closed ticket
 // in the same request — the comment is flagged isReopen so the frontend can
 // render "X reopened this ticket and commented" inline in the same thread.
+// Reopening also clears the previous assignee (and assignedAt): the ticket
+// goes back to Unassigned until a PM/Admin assigns it again, same as a
+// brand-new ticket.
 router.post('/:id/comments', async (req, res) => {
   try {
     const { text, reopen } = req.body;
@@ -249,6 +294,9 @@ router.post('/:id/comments', async (req, res) => {
       }
       isReopen = true;
       ticket.status = 'Reopened';
+      ticket.assignee = null;
+      ticket.assignedBy = null;
+      ticket.assignedAt = null;
     }
 
     const comment = new Comment({

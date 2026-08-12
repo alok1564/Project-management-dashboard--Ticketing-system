@@ -175,11 +175,19 @@
 }
 
 /* ===== Discussion / timeline ===== */
-.comments-section-inner h3 {
-  font-size: 0.95rem;
-  margin-bottom: 12px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--color-border-light);
+.discussion-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-sm);
+}
+
+.discussion-count {
+  color: var(--color-text-light);
+  font-weight: 600;
+  margin-left: 6px;
 }
 
 .timeline {
@@ -396,8 +404,40 @@
   margin-top: 8px;
 }
 
+/* ===== Floating "go to bottom" button ===== */
+.scroll-to-bottom-btn {
+  position: fixed;
+  right: var(--space-lg);
+  bottom: var(--space-lg);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  background-color: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-lg);
+  transition: background-color var(--transition-fast), transform var(--transition-fast);
+  z-index: 50;
+}
+
+.scroll-to-bottom-btn:hover {
+  background-color: var(--color-primary-hover);
+  transform: translateY(-2px);
+}
+
 @media (max-width: 768px) {
   .detail-header {
     flex-direction: column;
+  }
+
+  .scroll-to-bottom-btn {
+    right: var(--space-md);
+    bottom: var(--space-md);
   }
 }
