@@ -1,0 +1,403 @@
+.ticket-detail-page {
+  padding-top: var(--space-xl);
+  padding-bottom: var(--space-2xl);
+  max-width: 980px;
+}
+
+/* ===== Two-column layout: main + sidebar ===== */
+.detail-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: var(--space-lg);
+  align-items: start;
+}
+
+.detail-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  min-width: 0; /* prevents long text/comments from overflowing the grid track */
+}
+
+.detail-sidebar {
+  position: sticky;
+  top: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg-white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-md);
+}
+
+@media (max-width: 768px) {
+  .detail-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-sidebar {
+    position: static;
+  }
+}
+
+/* ===== Merged title + description + discussion card ===== */
+.detail-combined-card {
+  padding: var(--space-md);
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-sm);
+  gap: var(--space-sm);
+}
+
+.detail-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.25;
+}
+
+.detail-badges {
+  display: flex;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+}
+
+.detail-description {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--color-text);
+  white-space: pre-wrap;
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.comments-section-inner {
+  padding-top: var(--space-md);
+}
+
+/* ===== Sidebar sections ===== */
+.sidebar-section {
+  padding: var(--space-sm) 0 var(--space-md);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.sidebar-section:first-child {
+  padding-top: 0;
+}
+
+.sidebar-section-last,
+.sidebar-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.sidebar-section-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-sm);
+}
+
+.sidebar-person {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.sidebar-value {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.sidebar-empty {
+  font-size: 0.82rem;
+  font-style: italic;
+  color: var(--color-text-light);
+}
+
+.sidebar-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.sidebar-controls .btn {
+  width: 100%;
+}
+
+/* ===== Inline button/select loading spinner ===== */
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner-sm {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  opacity: 0.85;
+  animation: btn-spin 0.6s linear infinite;
+}
+
+.reopen-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.reopen-form textarea.form-control {
+  font-size: 0.82rem;
+  padding: 8px 10px;
+  min-height: 64px;
+}
+
+.reopen-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+}
+
+.reopen-form-actions .btn {
+  width: auto;
+}
+
+/* ===== Discussion / timeline ===== */
+.comments-section-inner h3 {
+  font-size: 0.95rem;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.timeline {
+  position: relative;
+  list-style: none;
+  margin-bottom: 12px;
+}
+
+/* connecting vertical line running behind the avatars */
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background-color: var(--color-border-light);
+}
+
+.timeline-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding-bottom: 14px;
+}
+
+.timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+.timeline-event {
+  align-items: center;
+}
+
+.timeline-event-text {
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+}
+
+.timeline-event-text .comment-author {
+  color: var(--color-text);
+}
+
+.comment-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: #fff;
+  margin-top: 2px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Bigger avatar used for actual comment cards (GitHub-style) */
+.timeline-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #fff;
+  position: relative;
+  z-index: 1;
+}
+
+.avatar-client { background-color: #F0B429; }
+.avatar-employee { background-color: #3B82F6; }
+.avatar-pm { background-color: #8B3A9E; }
+.avatar-admin { background-color: #22A06B; }
+
+/* ===== Comment card: header strip + body, with a pointer to the avatar ===== */
+.comment-card {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+/* pointer triangle (border) */
+.comment-card::before {
+  content: '';
+  position: absolute;
+  left: -7px;
+  top: 13px;
+  width: 0;
+  height: 0;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-right: 7px solid var(--color-border);
+}
+
+/* pointer triangle (fill, masks the border color to match header bg) */
+.comment-card::after {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 14px;
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-right: 6px solid var(--color-bg);
+}
+
+.comment-card-header {
+  background-color: var(--color-bg);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.comment-card-header-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  font-size: 0.8rem;
+}
+
+.comment-author {
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: var(--color-text);
+}
+
+.comment-verb {
+  color: var(--color-text-secondary);
+}
+
+.comment-time {
+  color: var(--color-text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.role-badge-client { background-color: rgba(240, 180, 41, 0.15); color: #B8790C; }
+.role-badge-employee { background-color: rgba(59, 130, 246, 0.15); color: #3B82F6; }
+.role-badge-pm { background-color: rgba(139, 58, 158, 0.15); color: #8B3A9E; }
+.role-badge-admin { background-color: rgba(34, 160, 107, 0.15); color: #22A06B; }
+
+.comment-card-body {
+  background-color: var(--color-bg-white);
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--color-text);
+}
+
+/* Comment that reopened a closed ticket — subtle accent, same pattern as status colors */
+.comment-card-reopen {
+  border-color: var(--status-reopened);
+}
+
+.comment-card-reopen::before {
+  border-right-color: var(--status-reopened);
+}
+
+.comment-card-reopen .comment-card-header {
+  background-color: var(--status-reopened-bg);
+  border-bottom-color: var(--status-reopened);
+}
+
+.comment-card-reopen::after {
+  border-right-color: var(--status-reopened-bg);
+}
+
+.no-comments-row {
+  list-style: none;
+}
+
+.no-comments {
+  color: var(--color-text-secondary);
+  font-style: italic;
+  text-align: center;
+  padding: 12px 0;
+  font-size: 0.85rem;
+}
+
+.comment-form {
+  margin-top: 10px;
+}
+
+.comment-form textarea.form-control {
+  font-size: 0.85rem;
+  padding: 8px 10px;
+  height: 64px;
+  min-height: 64px;
+}
+
+.comment-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+@media (max-width: 768px) {
+  .detail-header {
+    flex-direction: column;
+  }
+}

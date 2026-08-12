@@ -1,0 +1,232 @@
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: var(--color-bg-white);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.navbar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 64px;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+}
+
+.navbar-logo {
+  font-size: 1.5rem;
+}
+
+.navbar-title {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--color-primary-dark);
+}
+
+.navbar-menu {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  justify-content: space-between;
+  margin-left: var(--space-xl);
+  gap: var(--space-md);
+}
+
+.navbar-links {
+  display: flex;
+  gap: var(--space-md);
+  flex-shrink: 0;
+}
+
+.nav-link {
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  padding: var(--space-xs) 0;
+  position: relative;
+  transition: color var(--transition-fast);
+}
+
+.nav-link:hover {
+  color: var(--color-primary);
+}
+
+.nav-link.active {
+  color: var(--color-primary);
+}
+
+.nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: var(--color-primary);
+  border-radius: 2px;
+}
+
+/* === Stats pills in navbar === */
+.navbar-stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.navbar-stats::-webkit-scrollbar {
+  display: none;
+}
+
+.stat-pill {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 0.7rem;
+  font-weight: 600;
+  background-color: var(--color-border-light);
+  color: var(--color-text-secondary);
+  letter-spacing: 0.02em;
+}
+
+.stat-pill.stat-new {
+  background-color: var(--status-new-bg);
+  color: var(--status-new);
+}
+
+.stat-pill.stat-assigned {
+  background-color: var(--status-assigned-bg);
+  color: var(--status-assigned);
+}
+
+.stat-pill.stat-progress {
+  background-color: var(--status-in-progress-bg);
+  color: var(--status-in-progress);
+}
+
+.stat-pill.stat-closed {
+  background-color: var(--status-closed-bg);
+  color: var(--status-closed);
+}
+
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-shrink: 0;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.user-role {
+  font-size: 0.65rem;
+  background-color: var(--color-border-light);
+  color: var(--color-text-secondary);
+  padding: 2px 6px;
+  margin-top: 2px;
+}
+
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--color-text);
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: block;
+  }
+  
+  .navbar-menu {
+    position: absolute;
+    top: 64px;
+    left: 0;
+    width: 100%;
+    background-color: var(--color-bg-white);
+    flex-direction: column;
+    align-items: flex-start;
+    margin-left: 0;
+    padding: 0 var(--space-md) var(--space-md);
+    box-shadow: var(--shadow-md);
+    display: none;
+  }
+  
+  .navbar-menu.is-open {
+    display: flex;
+  }
+  
+  .navbar-links {
+    flex-direction: column;
+    width: 100%;
+    padding: var(--space-md) 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .navbar-stats {
+    width: 100%;
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid var(--color-border);
+    flex-wrap: wrap;
+  }
+  
+  .navbar-user {
+    width: 100%;
+    justify-content: space-between;
+    padding-top: var(--space-md);
+  }
+}
+
+@media (max-width: 1100px) and (min-width: 769px) {
+  .stat-pill {
+    padding: 2px 7px;
+    font-size: 0.65rem;
+  }
+  
+  .navbar-stats {
+    gap: 4px;
+  }
+}
