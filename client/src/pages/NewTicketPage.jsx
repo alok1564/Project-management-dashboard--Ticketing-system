@@ -45,7 +45,7 @@ export default function NewTicketPage() {
           {error && <div className="form-error">{error}</div>}
           
           <div className="form-group">
-            <label className="form-label" htmlFor="title">Ticket Title</label>
+            <label className="form-label" htmlFor="title">Ticket Title<span class="required">*</span></label>
             <input
               id="title"
               type="text"
@@ -58,7 +58,7 @@ export default function NewTicketPage() {
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="description">Description</label>
+            <label className="form-label" htmlFor="description">Description<span class="required">*</span></label>
             <textarea
               id="description"
               className="form-control"

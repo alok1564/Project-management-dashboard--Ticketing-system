@@ -35,24 +35,22 @@ export function AuthProvider({ children }) {
       setUser(newUser);
       localStorage.setItem('token', newToken);
       localStorage.setItem('user', JSON.stringify(newUser));
-      return { success: true };
+      return { success: true, mustChangePassword: newUser.mustChangePassword };
     } catch (error) {
       return { success: false, message: error.message };
     }
   };
 
-  const signup = async (name, email, password, role) => {
+  const changePassword = async (currentPassword, newPassword) => {
     try {
-      const data = await apiFetch('/auth/signup', {
+      await apiFetch('/auth/change-password', {
         method: 'POST',
-        body: { name, email, password, role },
+        body: { currentPassword, newPassword },
       });
-      
-      const { token: newToken, user: newUser } = data;
-      setToken(newToken);
-      setUser(newUser);
-      localStorage.setItem('token', newToken);
-      localStorage.setItem('user', JSON.stringify(newUser));
+      // Update local user to remove mustChangePassword flag
+      const updatedUser = { ...user, mustChangePassword: false };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
       return { success: true };
     } catch (error) {
       return { success: false, message: error.message };
@@ -71,7 +69,7 @@ export function AuthProvider({ children }) {
     user,
     token,
     login,
-    signup,
+    changePassword,
     logout,
     isAuthenticated: !!token,
     loading

@@ -1,146 +1,76 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { apiFetch } from '../utils/api';
-import TicketCard from '../components/TicketCard';
-import TicketFilters from '../components/TicketFilters';
 import './AdminPage.css';
 
-function filterByDateRange(tickets, filters) {
-  return tickets.filter(ticket => {
-    const created = new Date(ticket.createdAt);
-
-    if (filters.priority && ticket.priority !== filters.priority) {
-      return false;
-    }
-
-    if (filters.date) {
-      const filterDate = new Date(filters.date);
-      return (
-        created.getFullYear() === filterDate.getFullYear() &&
-        created.getMonth() === filterDate.getMonth() &&
-        created.getDate() === filterDate.getDate()
-      );
-    }
-
-    if (filters.month) {
-      const [year, month] = filters.month.split('-').map(Number);
-      return (
-        created.getFullYear() === year &&
-        created.getMonth() === month - 1
-      );
-    }
-
-    return true;
-  });
-}
-
 export default function AdminPage() {
-  const [users, setUsers] = useState([]);
-  const [allTickets, setAllTickets] = useState([]);
-  const [loadingUsers, setLoadingUsers] = useState(true);
-  const [loadingTickets, setLoadingTickets] = useState(true);
-  const [filters, setFilters] = useState({
-    status: '',
-    assignee: '',
-    priority: '',
-    date: '',
-    month: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`
-  });
-  const [activeTab, setActiveTab] = useState('users');
+  const [userStats, setUserStats] = useState({ total: 0, active: 0, pm: 0, employee: 0, client: 0 });
+  const [ticketStats, setTicketStats] = useState({ total: 0, open: 0, unassigned: 0 });
+  const [projectCount, setProjectCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    apiFetch('/users')
-      .then(setUsers)
-      .catch(console.error)
-      .finally(() => setLoadingUsers(false));
+    Promise.all([
+      apiFetch('/users?limit=1000').then(d => {
+        const users = d.users || d;
+        setUserStats({
+          total: users.length,
+          active: users.filter(u => u.status === 'active').length,
+          pm: users.filter(u => u.role === 'pm').length,
+          employee: users.filter(u => u.role === 'employee').length,
+          client: users.filter(u => u.role === 'client').length
+        });
+      }),
+      apiFetch('/tickets?limit=1000').then(d => {
+        const tickets = Array.isArray(d) ? d : (d.tickets || []);
+        setTicketStats({
+          total: tickets.length,
+          open: tickets.filter(t => t.status !== 'Closed').length,
+          unassigned: tickets.filter(t => !t.assignee).length
+        });
+      }),
+      apiFetch('/projects').then(d => {
+        const projects = Array.isArray(d) ? d : (d.projects || []);
+        setProjectCount(projects.length);
+      }).catch(() => setProjectCount(0))
+    ]).finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
-    setLoadingTickets(true);
-    const query = new URLSearchParams();
-    if (filters.status) query.append('status', filters.status);
-    if (filters.assignee) query.append('assignee', filters.assignee);
-    
-    apiFetch(`/tickets?${query.toString()}`)
-      .then(setAllTickets)
-      .catch(console.error)
-      .finally(() => setLoadingTickets(false));
-  }, [filters.status, filters.assignee]);
-
-  const displayedTickets = filterByDateRange(allTickets, filters);
+  if (loading) return <div className="loading-spinner"></div>;
 
   return (
     <div className="container admin-page animate-fade-in">
-      <h1 className="page-title mb-lg">Admin Dashboard</h1>
+      <h1 className="page-title mb-lg">Admin Overview</h1>
 
-      <div className="admin-tabs hide-desktop">
-        <button 
-          className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
-          onClick={() => setActiveTab('users')}
-        >
-          Users
-        </button>
-        <button 
-          className={`tab-btn ${activeTab === 'tickets' ? 'active' : ''}`}
-          onClick={() => setActiveTab('tickets')}
-        >
-          Tickets
-        </button>
+      <div className="stat-cards">
+        <div className="stat-card"><span className="stat-card-value">{userStats.total}</span><span className="stat-card-label">Total Users</span></div>
+        <div className="stat-card"><span className="stat-card-value">{userStats.active}</span><span className="stat-card-label">Active Users</span></div>
+        <div className="stat-card"><span className="stat-card-value">{userStats.pm}</span><span className="stat-card-label">Project Managers</span></div>
+        <div className="stat-card"><span className="stat-card-value">{userStats.employee}</span><span className="stat-card-label">Employees</span></div>
+        <div className="stat-card"><span className="stat-card-value">{userStats.client}</span><span className="stat-card-label">Clients</span></div>
+        <div className="stat-card"><span className="stat-card-value">{projectCount}</span><span className="stat-card-label">Active Projects</span></div>
+        <div className="stat-card"><span className="stat-card-value">{ticketStats.open}</span><span className="stat-card-label">Open Tickets</span></div>
+        <div className="stat-card"><span className="stat-card-value">{ticketStats.unassigned}</span><span className="stat-card-label">Unassigned Tickets</span></div>
       </div>
 
-      <div className="admin-layout">
-        <div className={`admin-section ${activeTab !== 'users' ? 'hide-mobile' : ''}`}>
-          <div className="section-header">
-            <h2>User Management</h2>
-            <span className="badge">{users.length} Total</span>
-          </div>
-          
-          <div className="card">
-            {loadingUsers ? (
-              <div className="loading-spinner"></div>
-            ) : (
-              <div className="table-responsive">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Email</th>
-                      <th>Role</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map(u => (
-                      <tr key={u._id}>
-                        <td className="font-medium">{u.name}</td>
-                        <td className="text-secondary">{u.email}</td>
-                        <td><span className="badge">{u.role}</span></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className={`admin-section ${activeTab !== 'tickets' ? 'hide-mobile' : ''}`}>
-          <div className="section-header">
-            <h2>All Tickets</h2>
-          </div>
-          
-          <TicketFilters onFilterChange={setFilters} />
-          
-          <div className="ticket-list-wrapper">
-            {loadingTickets ? (
-              <div className="loading-spinner"></div>
-            ) : displayedTickets.length > 0 ? (
-              displayedTickets.map(ticket => (
-                <TicketCard key={ticket._id} ticket={ticket} />
-              ))
-            ) : (
-              <div className="card text-center p-lg">No tickets found</div>
-            )}
-          </div>
-        </div>
+      <h2 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: 'var(--space-md)' }}>Quick Actions</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-md)' }}>
+        <Link to="/admin/users" className="card" style={{ textAlign: 'center', padding: 'var(--space-lg)', cursor: 'pointer' }}>
+          <div style={{ fontSize: '1.5rem', marginBottom: 'var(--space-sm)' }}>👥</div>
+          <div className="font-medium">Manage Users</div>
+        </Link>
+        <Link to="/admin/clients" className="card" style={{ textAlign: 'center', padding: 'var(--space-lg)', cursor: 'pointer' }}>
+          <div style={{ fontSize: '1.5rem', marginBottom: 'var(--space-sm)' }}>🏢</div>
+          <div className="font-medium">Manage Clients</div>
+        </Link>
+        <Link to="/admin/users/new" className="card" style={{ textAlign: 'center', padding: 'var(--space-lg)', cursor: 'pointer' }}>
+          <div style={{ fontSize: '1.5rem', marginBottom: 'var(--space-sm)' }}>➕</div>
+          <div className="font-medium">Create User</div>
+        </Link>
+        <Link to="/admin/audit-logs" className="card" style={{ textAlign: 'center', padding: 'var(--space-lg)', cursor: 'pointer' }}>
+          <div style={{ fontSize: '1.5rem', marginBottom: 'var(--space-sm)' }}>📝</div>
+          <div className="font-medium">Audit Logs</div>
+        </Link>
       </div>
     </div>
   );

@@ -13,7 +13,8 @@ export default function Navbar() {
   useEffect(() => {
     if (user) {
       apiFetch('/tickets')
-        .then(tickets => {
+        .then(data => {
+          const tickets = Array.isArray(data) ? data : (data.tickets || []);
           const s = tickets.reduce((acc, t) => {
             acc[t.status] = (acc[t.status] || 0) + 1;
             acc.total += 1;
@@ -27,15 +28,15 @@ export default function Navbar() {
 
   if (!user) return null;
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
   const initial = user.name ? user.name.charAt(0).toUpperCase() : 'U';
 
   return (
     <nav className="navbar">
       <div className="container navbar-container">
         <Link to="/" className="navbar-brand">
-  <img src="/multiplier_logo.png" alt="Multiplier" className="navbar-logo-img" />
-</Link>
+          <img src="/multiplier_logo.png" alt="Multiplier" className="navbar-logo-img" />
+        </Link>
         
         <button 
           className="mobile-menu-btn" 
@@ -48,19 +49,26 @@ export default function Navbar() {
           <div className="navbar-links">
             <Link 
               to="/" 
-              className={`nav-link ${isActive('/') ? 'active' : ''}`}
+              className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
               onClick={() => setMobileMenuOpen(false)}
             >
               Dashboard
             </Link>
+
             {user.role === 'admin' && (
-              <Link 
-                to="/admin" 
-                className={`nav-link ${isActive('/admin') ? 'active' : ''}`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Admin
-              </Link>
+              <>
+                <Link to="/admin" className={`nav-link ${isActive('/admin') ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}>Overview</Link>
+                <Link to="/admin/users" className={`nav-link ${isActive('/admin/users') ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}>Users</Link>
+                <Link to="/admin/clients" className={`nav-link ${isActive('/admin/clients') ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}>Clients</Link>
+                <Link to="/admin/audit-logs" className={`nav-link ${isActive('/admin/audit-logs') ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}>Audit Logs</Link>
+              </>
+            )}
+
+            {user.role === 'pm' && (
+              <>
+                <Link to="/manager/clients" className={`nav-link ${isActive('/manager/clients') ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}>My Clients</Link>
+                <Link to="/manager/employees" className={`nav-link ${isActive('/manager/employees') ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}>My Employees</Link>
+              </>
             )}
           </div>
 

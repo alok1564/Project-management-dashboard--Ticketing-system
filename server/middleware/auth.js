@@ -16,6 +16,11 @@ const authenticate = async (req, res, next) => {
       return res.status(401).json({ error: 'User not found' });
     }
 
+    // Block inactive users from accessing any API
+    if (user.status === 'inactive') {
+      return res.status(403).json({ error: 'Account is deactivated' });
+    }
+
     req.user = user;
     next();
   } catch (error) {

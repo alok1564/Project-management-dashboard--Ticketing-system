@@ -2,9 +2,12 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background-color: var(--color-bg-white);
+  background-color: color-mix(in srgb, var(--color-bg-white) 70%, transparent);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  border-bottom: 1px solid var(--color-border-light);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border-light) 60%, transparent);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .navbar-container {
@@ -25,12 +28,23 @@
   height: 60px;
   width: auto;
   flex-shrink: 0;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.navbar-brand:hover .navbar-logo-img {
+  transform: scale(1.06) rotate(-3deg);
 }
 
 .navbar-title {
   font-weight: 700;
   font-size: 1.25rem;
   color: var(--color-primary-dark);
+  transition: color 0.25s ease, letter-spacing 0.25s ease;
+}
+
+.navbar-brand:hover .navbar-title {
+  color: var(--color-primary);
+  letter-spacing: 0.01em;
 }
 
 .navbar-menu {
@@ -53,18 +67,10 @@
   color: var(--color-text-secondary);
   padding: var(--space-xs) 0;
   position: relative;
-  transition: color var(--transition-fast);
+  transition: color 0.25s ease, transform 0.25s ease;
 }
 
-.nav-link:hover {
-  color: var(--color-primary);
-}
-
-.nav-link.active {
-  color: var(--color-primary);
-}
-
-.nav-link.active::after {
+.nav-link::after {
   content: '';
   position: absolute;
   bottom: -4px;
@@ -73,6 +79,26 @@
   height: 2px;
   background-color: var(--color-primary);
   border-radius: 2px;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-link:hover {
+  color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.nav-link:hover::after {
+  transform: scaleX(1);
+}
+
+.nav-link.active {
+  color: var(--color-primary);
+}
+
+.nav-link.active::after {
+  transform: scaleX(1);
 }
 
 /* === Stats pills in navbar === */
@@ -102,6 +128,13 @@
   background-color: var(--color-border-light);
   color: var(--color-text-secondary);
   letter-spacing: 0.02em;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease, filter 0.25s ease;
+}
+
+.stat-pill:hover {
+  transform: translateY(-2px) scale(1.06);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  filter: brightness(1.04);
 }
 
 .stat-pill.stat-new {
@@ -135,6 +168,15 @@
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  padding: 4px 8px;
+  margin: -4px -8px;
+  border-radius: var(--radius-md, 8px);
+  transition: background-color 0.25s ease;
+  cursor: default;
+}
+
+.user-info:hover {
+  background-color: var(--color-border-light);
 }
 
 .user-avatar {
@@ -148,6 +190,12 @@
   justify-content: center;
   font-weight: 700;
   font-size: 1rem;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+}
+
+.user-info:hover .user-avatar {
+  transform: scale(1.08);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
 }
 
 .user-details {
@@ -176,6 +224,12 @@
   font-size: 1.5rem;
   cursor: pointer;
   color: var(--color-text);
+  transition: color 0.25s ease, transform 0.25s ease;
+}
+
+.mobile-menu-btn:hover {
+  color: var(--color-primary);
+  transform: scale(1.12);
 }
 
 @media (max-width: 768px) {
@@ -188,7 +242,9 @@
     top: 64px;
     left: 0;
     width: 100%;
-    background-color: var(--color-bg-white);
+    background-color: color-mix(in srgb, var(--color-bg-white) 85%, transparent);
+    backdrop-filter: blur(14px) saturate(180%);
+    -webkit-backdrop-filter: blur(14px) saturate(180%);
     flex-direction: column;
     align-items: flex-start;
     margin-left: 0;

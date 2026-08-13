@@ -8,19 +8,15 @@ import './DashboardPage.css';
 
 function filterTickets(tickets, filters) {
   return tickets.filter(ticket => {
-    // Search by title
     if (filters.search && !ticket.title?.toLowerCase().includes(filters.search.toLowerCase())) {
       return false;
     }
-
-    // Priority filter
     if (filters.priority && ticket.priority !== filters.priority) {
       return false;
     }
 
     const created = new Date(ticket.createdAt);
 
-    // Specific date filter (overrides month)
     if (filters.date) {
       const filterDate = new Date(filters.date);
       return (
@@ -30,7 +26,6 @@ function filterTickets(tickets, filters) {
       );
     }
 
-    // Month filter
     if (filters.month) {
       const [year, month] = filters.month.split('-').map(Number);
       return (
@@ -41,6 +36,35 @@ function filterTickets(tickets, filters) {
 
     return true;
   });
+}
+
+function getSubtitle(role) {
+  switch (role) {
+    case 'client':
+      return "Track your tickets and see what's being worked on.";
+    case 'employee':
+      return "Here's what's on your plate today.";
+    case 'pm':
+      return "Here's how your team's tickets are moving.";
+    case 'admin':
+      return "Here's an overview of activity across the platform.";
+    default:
+      return "Here's your project status.";
+  }
+}
+function getwelcome(role) {
+  switch (role) {
+    case 'client':
+      return "Welcome";
+    case 'employee':
+      return "Good to see you .";
+    case 'pm':
+      return "Good to see you .";
+    case 'admin':
+      return "Good to see you ";
+    default:
+      return "Hey there .";
+  }
 }
 
 export default function DashboardPage() {
@@ -59,13 +83,14 @@ export default function DashboardPage() {
   const fetchTickets = async () => {
     setLoading(true);
     try {
-      // Only send status and assignee to the API (server-side filters)
       const query = new URLSearchParams();
       if (filters.status) query.append('status', filters.status);
       if (filters.assignee) query.append('assignee', filters.assignee);
 
       const data = await apiFetch(`/tickets?${query.toString()}`);
-      setAllTickets(data);
+      // Handle both old format (array) and new format (paginated object)
+      const tickets = Array.isArray(data) ? data : (data.tickets || []);
+      setAllTickets(tickets);
     } catch (err) {
       console.error('Failed to fetch tickets', err);
     } finally {
@@ -77,23 +102,18 @@ export default function DashboardPage() {
     fetchTickets();
   }, [filters.status, filters.assignee]);
 
-  // Apply client-side filters (search, priority, date, month)
   const displayedTickets = filterTickets(allTickets, filters);
 
   return (
     <div className="container dashboard-page animate-fade-in">
       <div className="dashboard-header">
         <div>
-          <h1 className="dashboard-title">Welcome back, {user.name}</h1>
-          <p className="dashboard-subtitle">
-            Here's your project status.
-          </p>
+          <h1 className="dashboard-title">{getwelcome(user.role)}, {user.name}</h1>
+          <p className="dashboard-subtitle">{getSubtitle(user.role)}</p>
         </div>
 
         {user.role === 'client' && (
-          <Link to="/tickets/new" className="btn btn-primary">
-            + New Ticket
-          </Link>
+          <Link to="/tickets/new" className="btn btn-primary">+ New Ticket</Link>
         )}
       </div>
 

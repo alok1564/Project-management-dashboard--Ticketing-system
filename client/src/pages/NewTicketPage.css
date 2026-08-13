@@ -3,7 +3,9 @@
   padding-bottom: var(--space-2xl);
   max-width: 800px;
 }
-
+.required {
+  color: rgb(200, 68, 68);
+}
 .page-header {
   margin-bottom: var(--space-xl);
 }

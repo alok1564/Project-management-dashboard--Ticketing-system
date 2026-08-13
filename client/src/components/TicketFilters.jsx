@@ -42,7 +42,7 @@ export default function TicketFilters({ onFilterChange }) {
   useEffect(() => {
     if (showAssigneeFilter) {
       apiFetch('/users?role=employee')
-        .then(data => setEmployees(data))
+        .then(data => setEmployees(data.users || data))
         .catch(err => console.error('Failed to load employees', err));
     }
   }, [showAssigneeFilter]);
@@ -161,6 +161,7 @@ export default function TicketFilters({ onFilterChange }) {
           <option value="Assigned">Assigned</option>
           <option value="In Progress">In Progress</option>
           <option value="Closed">Closed</option>
+          <option value="Reopened">Reopened</option>
         </select>
       </div>
 

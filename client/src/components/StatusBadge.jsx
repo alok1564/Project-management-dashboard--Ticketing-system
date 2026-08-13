@@ -13,6 +13,14 @@ export default function StatusBadge({ status }) {
       bgColor = 'var(--status-in-progress-bg)';
       color = 'var(--status-in-progress)';
       break;
+    case 'waiting for client':
+      bgColor = 'var(--status-waiting-bg)';
+      color = 'var(--status-waiting)';
+      break;
+    case 'resolved':
+      bgColor = 'var(--status-resolved-bg)';
+      color = 'var(--status-resolved)';
+      break;
     case 'closed':
       bgColor = 'var(--status-closed-bg)';
       color = 'var(--status-closed)';

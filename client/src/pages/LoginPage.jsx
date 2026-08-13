@@ -1,17 +1,22 @@
 import React, { useState } from 'react';
-import { Navigate, Link } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import './LoginPage.css';
 
 export default function LoginPage() {
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  if (isAuthenticated) {
+  if (isAuthenticated && user && !user.mustChangePassword) {
     return <Navigate to="/" replace />;
+  }
+
+  if (isAuthenticated && user && user.mustChangePassword) {
+    return <Navigate to="/change-password" replace />;
   }
 
   const handleSubmit = async (e) => {
@@ -23,6 +28,8 @@ export default function LoginPage() {
     if (!result.success) {
       setError(result.message || 'Login failed. Please check your credentials.');
       setLoading(false);
+    } else if (result.mustChangePassword) {
+      navigate('/change-password');
     }
   };
 
@@ -35,15 +42,14 @@ export default function LoginPage() {
     <div className="login-page">
       <div className="login-container animate-slide-up">
         <div className="login-header">
-          <div className="login-logo">🎫</div>
-          <h1 className="login-title">Multiplier</h1>
-          <p className="login-subtitle">Support Ticketing Dashboard</p>
+          <h1 className="login-title">Multiplier AI </h1>
+          <p className="login-subtitle">Project Management  Dashboard</p>
         </div>
 
         <div className="card login-card">
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label className="form-label" htmlFor="email">Email Address</label>
+              <label className="form-label" htmlFor="email">Email Address<span class="required">*</span></label>
               <input
                 id="email"
                 type="email"
@@ -56,7 +62,7 @@ export default function LoginPage() {
             </div>
             
             <div className="form-group">
-              <label className="form-label" htmlFor="password">Password</label>
+              <label className="form-label" htmlFor="password">Password<span class="required">*</span></label>
               <input
                 id="password"
                 type="password"
@@ -104,10 +110,6 @@ export default function LoginPage() {
               <span className="demo-role badge">Client</span>
             </li>
           </ul>
-        </div>
-
-        <div className="signup-footer">
-          <p>Don't have an account? <Link to="/signup" className="signup-link">Create Account</Link></p>
         </div>
       </div>
     </div>

@@ -65,8 +65,9 @@ export default function TicketDetailPage() {
   useEffect(() => {
     fetchTicket();
     if (user.role === 'admin' || user.role === 'pm') {
-      apiFetch('/users').then(data => {
-        setEmployees(data.filter(u => u.role === 'employee'));
+      apiFetch('/users?role=employee').then(data => {
+        const emps = data.users || data;
+        setEmployees(Array.isArray(emps) ? emps.filter(u => u.role === 'employee') : []);
       }).catch(console.error);
     }
   }, [id, user.role]);
@@ -327,14 +328,18 @@ export default function TicketDetailPage() {
                   className="form-control"
                   value={assigneeId}
                   onChange={(e) => setAssigneeId(e.target.value)}
-                  disabled={updatingAssignee}
+                  disabled={updatingAssignee || ticket.status === 'Closed'}
                 >
                   <option value="">Unassigned</option>
                   {employees.map(emp => (
                     <option key={emp._id} value={emp._id}>{emp.name}</option>
                   ))}
                 </select>
-                <button className="btn btn-secondary btn-sm" onClick={handleAssign} disabled={updatingAssignee}>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={handleAssign}
+                  disabled={updatingAssignee || ticket.status === 'Closed'}
+                >
                   {updatingAssignee ? <span className="spinner-sm" aria-label="Updating" /> : 'Update Assignee'}
                 </button>
               </div>
@@ -415,6 +420,22 @@ export default function TicketDetailPage() {
               {ticket.assignedBy?.name || '—'}
             </span>
           </div>
+
+          {ticket.managerId && (
+            <div className="sidebar-section">
+              <h4 className="sidebar-section-title">Project Manager</h4>
+              <div className="sidebar-person">
+                <span className="comment-avatar avatar-pm">{ticket.managerId.name ? ticket.managerId.name.charAt(0).toUpperCase() : 'P'}</span>
+                <span>{ticket.managerId.name || '—'}</span>
+              </div>
+            </div>
+          )}
+          {ticket.projectId && (
+            <div className="sidebar-section">
+              <h4 className="sidebar-section-title">Project</h4>
+              <span className="sidebar-value">{ticket.projectId.name || '—'}</span>
+            </div>
+          )}
 
           <div className="sidebar-section">
             <h4 className="sidebar-section-title">Created</h4>
