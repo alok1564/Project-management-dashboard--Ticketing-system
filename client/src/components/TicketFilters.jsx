@@ -35,8 +35,17 @@ export default function TicketFilters({ onFilterChange }) {
   const [day, setDay] = useState('');
   const [month, setMonth] = useState(getCurrentMonth());
   const [employees, setEmployees] = useState([]);
+  const [projectId, setProjectId] = useState('');
+  const [clientId, setClientId] = useState('');
+  const [projects, setProjects] = useState([]);
+  const [clients, setClients] = useState([]);
 
   const showAssigneeFilter = user?.role === 'admin' || user?.role === 'pm';
+  // Every role has a project filter, but each sources its options differently
+  // (client: own projects, pm/admin: managed/all projects, employee: projects
+  // derived from their assigned tickets) — see the effect below.
+  const showProjectFilter = !!user?.role;
+  const showClientFilter = user?.role === 'admin' || user?.role === 'pm';
   const maxSelectableDay = useMemo(() => getMaxSelectableDay(month), [month]);
 
   useEffect(() => {
@@ -48,6 +57,27 @@ export default function TicketFilters({ onFilterChange }) {
   }, [showAssigneeFilter]);
 
   useEffect(() => {
+    if (!user?.role) return;
+
+    if (user.role === 'client') {
+      apiFetch('/clients/me/projects')
+        .then(data => setProjects(data || []))
+        .catch(err => console.error('Failed to load projects', err));
+    } else if (user.role === 'pm' || user.role === 'admin') {
+      apiFetch('/clients/projects')
+        .then(data => setProjects(data || []))
+        .catch(err => console.error('Failed to load projects', err));
+      apiFetch('/clients')
+        .then(data => setClients(data.clients || data))
+        .catch(err => console.error('Failed to load clients', err));
+    } else if (user.role === 'employee') {
+      apiFetch('/tickets/projects/mine')
+        .then(data => setProjects(data || []))
+        .catch(err => console.error('Failed to load projects', err));
+    }
+  }, [user?.role]);
+
+  useEffect(() => {
     if (day && Number(day) > maxSelectableDay) {
       setDay('');
       setDate('');
@@ -57,7 +87,7 @@ export default function TicketFilters({ onFilterChange }) {
   }, [maxSelectableDay]);
 
   const emitFilters = (overrides = {}) => {
-    const next = { search, status, assignee, priority, date, month, ...overrides };
+    const next = { search, status, assignee, priority, date, month, projectId, clientId, ...overrides };
     onFilterChange(next);
   };
 
@@ -104,6 +134,18 @@ export default function TicketFilters({ onFilterChange }) {
       setDate('');
       emitFilters({ date: '', month });
     }
+  };
+
+  const handleProjectChange = (e) => {
+    const val = e.target.value;
+    setProjectId(val);
+    emitFilters({ projectId: val });
+  };
+
+  const handleClientChange = (e) => {
+    const val = e.target.value;
+    setClientId(val);
+    emitFilters({ clientId: val });
   };
 
   return (
@@ -180,6 +222,40 @@ export default function TicketFilters({ onFilterChange }) {
           <option value="P4">P4 - Low (5 days)</option>
         </select>
       </div>
+
+      {showProjectFilter && (
+        <div className="filter-group">
+          <label className="filter-label" htmlFor="projectFilter">Project</label>
+          <select
+            id="projectFilter"
+            className="filter-control"
+            value={projectId}
+            onChange={handleProjectChange}
+          >
+            <option value="">All projects</option>
+            {projects.map(proj => (
+              <option key={proj._id} value={proj._id}>{proj.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {showClientFilter && (
+        <div className="filter-group">
+          <label className="filter-label" htmlFor="clientFilter">Client</label>
+          <select
+            id="clientFilter"
+            className="filter-control"
+            value={clientId}
+            onChange={handleClientChange}
+          >
+            <option value="">All clients</option>
+            {clients.map(cl => (
+              <option key={cl._id} value={cl._id}>{cl.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {showAssigneeFilter && (
         <div className="filter-group">

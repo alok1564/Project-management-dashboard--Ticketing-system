@@ -78,7 +78,9 @@ export default function DashboardPage() {
     priority: '',
     date: '',
     search: '',
-    month: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`
+    month: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
+    projectId: '',
+    clientId: ''
   });
 
   const fetchTickets = async () => {
@@ -87,6 +89,8 @@ export default function DashboardPage() {
       const query = new URLSearchParams();
       if (filters.status) query.append('status', filters.status);
       if (filters.assignee) query.append('assignee', filters.assignee);
+      if (filters.projectId) query.append('projectId', filters.projectId);
+      if (filters.clientId) query.append('clientId', filters.clientId);
 
       const data = await apiFetch(`/tickets?${query.toString()}`);
       // Handle both old format (array) and new format (paginated object)
@@ -101,7 +105,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchTickets();
-  }, [filters.status, filters.assignee]);
+  }, [filters.status, filters.assignee, filters.projectId, filters.clientId]);
 
   const displayedTickets = filterTickets(allTickets, filters);
 

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const projectSchema = new mongoose.Schema({
-  clientId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
+  clientId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   managerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   name: { type: String, required: true },
   description: { type: String, default: '' },
@@ -22,5 +22,6 @@ projectSchema.pre('save', function(next) {
 });
 
 projectSchema.index({ managerId: 1 });
+projectSchema.index({ clientId: 1 });
 
 module.exports = mongoose.model('Project', projectSchema);

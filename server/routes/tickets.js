@@ -4,6 +4,7 @@ const Comment = require('../models/Comment');
 const User = require('../models/User');
 const ClientProfile = require('../models/ClientProfile');
 const EmployeeProfile = require('../models/EmployeeProfile');
+const Project = require('../models/Project');
 const TicketHistory = require('../models/TicketHistory');
 const AuditLog = require('../models/AuditLog');
 const { authenticate, requireRole } = require('../middleware/auth');
@@ -56,7 +57,7 @@ async function autoAdvanceToInProgress(ticket) {
 // GET /api/tickets — list tickets scoped by role, with optional filters
 router.get('/', async (req, res) => {
   try {
-    const { status, assignee, priority, search, page = 1, limit = 100 } = req.query;
+    const { status, assignee, priority, search, projectId, clientId, page = 1, limit = 100 } = req.query;
     const query = {};
 
     // Role-based scoping
@@ -82,6 +83,18 @@ router.get('/', async (req, res) => {
       } else if (req.user.role === 'pm' || req.user.role === 'admin') {
         query.assignee = assignee;
       }
+    }
+    // projectId — applies to all roles. Intersected with the role-scoping
+    // fields already set above (e.g. a client's query.requester stays pinned
+    // to themselves), so this can never widen a role's visibility.
+    if (projectId) {
+      query.projectId = projectId;
+    }
+    // clientId — PM/Admin only. For a PM, this ANDs with the query.managerId
+    // scoping already set above: passing a clientId outside their managed
+    // clients just yields zero matches rather than leaking another PM's data.
+    if (clientId && (req.user.role === 'pm' || req.user.role === 'admin')) {
+      query.requester = clientId;
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -116,18 +129,35 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/tickets — client creates a ticket
+// A client can have multiple projects, so the client must specify which
+// project the ticket belongs to. The project is validated against the
+// client's own ClientProfile.projectIds before being trusted. managerId is
+// snapshotted from the project's CURRENT manager at creation time — if the
+// project's PM changes later, this ticket's managerId does NOT change.
 router.post('/', requireRole('client'), async (req, res) => {
   try {
-    const { title, description, priority } = req.body;
+    const { title, description, priority, projectId } = req.body;
 
     if (!title || !description) {
       return res.status(400).json({ message: 'Title and description are required' });
     }
+    if (!projectId) {
+      return res.status(400).json({ message: 'Project is required' });
+    }
 
-    // Look up client profile to find assigned PM and project
+    // Confirm the submitted project actually belongs to this client
     const clientProfile = await ClientProfile.findOne({ userId: req.user._id });
-    const managerId = clientProfile ? clientProfile.managerId : null;
-    const projectId = clientProfile ? clientProfile.projectId : null;
+    const ownsProject = clientProfile && clientProfile.projectIds.some(
+      (id) => id.toString() === projectId.toString()
+    );
+    if (!ownsProject) {
+      return res.status(403).json({ message: 'Invalid project for this client' });
+    }
+
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
 
     const newTicket = new Ticket({
       title,
@@ -135,8 +165,8 @@ router.post('/', requireRole('client'), async (req, res) => {
       priority: priority || 'P3',
       requester: req.user._id,
       status: 'New',
-      managerId,
-      projectId
+      managerId: project.managerId, // snapshot of the project's current PM
+      projectId: project._id
     });
 
     await newTicket.save();
@@ -160,6 +190,28 @@ router.post('/', requireRole('client'), async (req, res) => {
   } catch (error) {
     console.error('Create ticket error:', error);
     res.status(500).json({ message: 'Server error creating ticket' });
+  }
+});
+
+// GET /api/tickets/projects/mine — distinct projects from the employee's assigned tickets
+// Employees aren't tied to a project directly, only to tickets via assignee,
+// so "their projects" is defined as: projects that have at least one ticket
+// assigned to them. Must be declared before GET /:id, otherwise "/projects"
+// would be matched as :id = "projects" and fail the Ticket.findById lookup.
+router.get('/projects/mine', requireRole('employee'), async (req, res) => {
+  try {
+    const projectIds = await Ticket.distinct('projectId', {
+      assignee: req.user._id,
+      projectId: { $ne: null }
+    });
+
+    const projects = await Project.find({ _id: { $in: projectIds } }, 'name status')
+      .sort({ name: 1 });
+
+    res.json(projects);
+  } catch (error) {
+    console.error('Get assigned projects error:', error);
+    res.status(500).json({ message: 'Server error fetching your projects' });
   }
 });
 

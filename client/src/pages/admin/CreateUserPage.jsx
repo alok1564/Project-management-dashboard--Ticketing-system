@@ -119,8 +119,8 @@ export default function CreateUserPage() {
             <>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)' }}>
                 <div className="form-group">
-                  <label className="form-label">Company Name</label>
-                  <input className="form-control" value={companyName} onChange={e => setCompanyName(e.target.value)} />
+                  <label className="form-label">Company Name<span class="required">*</span></label>
+                  <input className="form-control" value={companyName} onChange={e => setCompanyName(e.target.value)} required />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Assign Project Manager <span class="required">*</span></label>
