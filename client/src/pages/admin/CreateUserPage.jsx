@@ -63,8 +63,8 @@ export default function CreateUserPage() {
           <div className="form-group">
             <label className="form-label">Role <span class="required">*</span></label>
             <select className="form-control" value={role} onChange={e => setRole(e.target.value)} required>
-              <option value="">Select Role<span class="required">*</span></option>
-              <option value="pm">Project Manager<span class="required">*</span></option>
+              <option value="">Select Role</option>
+              <option value="pm">Project Manager</option>
               <option value="employee">Employee</option>
               <option value="client">Client</option>
             </select>

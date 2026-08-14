@@ -38,6 +38,21 @@ function filterTickets(tickets, filters) {
   });
 }
 
+function getGreeting(role) {
+  switch (role) {
+    case 'client':
+      return 'Welcome back';
+    case 'employee':
+      return 'Hey';
+    case 'pm':
+      return 'Welcome back';
+    case 'admin':
+      return 'Welcome back';
+    default:
+      return 'Welcome back';
+  }
+}
+
 function getSubtitle(role) {
   switch (role) {
     case 'client':
@@ -50,20 +65,6 @@ function getSubtitle(role) {
       return "Here's an overview of activity across the platform.";
     default:
       return "Here's your project status.";
-  }
-}
-function getwelcome(role) {
-  switch (role) {
-    case 'client':
-      return "Welcome";
-    case 'employee':
-      return "Good to see you .";
-    case 'pm':
-      return "Good to see you .";
-    case 'admin':
-      return "Good to see you ";
-    default:
-      return "Hey there .";
   }
 }
 
@@ -108,7 +109,7 @@ export default function DashboardPage() {
     <div className="container dashboard-page animate-fade-in">
       <div className="dashboard-header">
         <div>
-          <h1 className="dashboard-title">{getwelcome(user.role)}, {user.name}</h1>
+          <h1 className="dashboard-title">{getGreeting(user.role)}, {user.name}</h1>
           <p className="dashboard-subtitle">{getSubtitle(user.role)}</p>
         </div>
 

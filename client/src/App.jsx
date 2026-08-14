@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import LoginPage from './pages/LoginPage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
 import DashboardPage from './pages/DashboardPage';
@@ -20,12 +21,13 @@ import PMClientListPage from './pages/manager/PMClientListPage';
 
 function Layout() {
   return (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Navbar />
-      <main>
+      <main style={{ flex: 1, paddingBottom: 'var(--space-2xl)' }}>
         <Outlet />
       </main>
-    </>
+      <Footer />
+    </div>
   );
 }
 
